@@ -39,13 +39,12 @@
     {% if grade > 80 %}
     <div class="alert alert-success">
        <!--HINT Display passed info -->
-       <p><b>Congratulations, {{user.first_name}}! </b>You have passed the exam and completed the course with score {{grade}} / 100</p>
+       <strong>Congratulations, {{ user.first_name }}! </strong> You have passed the exam and completed the course with score {{ grade }} / 100
     </div>
         {% else %}
         <div class="alert alert-danger">
             <!--HINT Display failed info -->
-            <p><b>Failed. </b>Sorry, {{user.first_name}}! You have failed the exam with score {{grade}} / 100</p>
-
+            <strong>Failed:</strong> Sorry, {{ user.first_name }}! You have failed the exam with score {{ grade }} / 100
         </div>
         <a class="btn btn-link text-danger" href="{% url 'onlinecourse:course_details' course.id %}">Re-test</a>
         {% endif %}
@@ -53,28 +52,26 @@
         <h5 class="">Exam results</h5>
             <!--HINT Display exam results-->
             <!--... for each question in the course ...-->
-             {% for lesson in course.lesson_set.all %}
-             {% for question in lesson.question_set.all %}
+             {% for question in course.lesson_set.all %}
              <div class="card mt-1">
-                 <div class="card-header"><h5 style="font-weight:bold">{{ question.question_text}}</h5></div>
-                 <div class="form-group">
+                <div class="card-header">
+                    <h5>{{ question.question_text }}</h5>
+                </div>
+                <div class="card-body">
                  <!--... for each choice in the question  choice_{{choice.id}}...-->
-                     {% for choice in question.choice_set.all %}
-                     <div class="form-check">
-                         {% if choice.id in selected %}
-                             {% if choice.is_correct == True %}
-                                 <label style="color:#2ea94a;font-weight:bold">Correct answer: {{choice.choice_text}}</label>
-                             {% else %}
-                                 <label style="color:red;font-weight:bold">Wrong answer: {{choice.choice_text}}</label>
-                             {% endif %}
-                         {% else %}
-                             <label>{{choice.choice_text}}</label>
-                         {% endif %}
-                     </div>
-                     {% endfor %}
+                    {% for choice in question.choice_set.all %}
+                    {% if choice in selected_ids and choice.is_correct == True %}
+                    <p class="text-success"><b>Correct answer: {{ choice.choice_text}}</b></p>
+                    {% elif choice in selected_ids and choice.is_correct == False %}
+                    <p class="text-danger"><b>Wrong answer: {{ choice.choice_text}}</b></p>
+                    {% elif choice.is_correct == True %}
+                    <p class="text-warning"><b>Not selected: {{ choice.choice_text}}</b></p>
+                    {% else %}
+                    <p class="card-text">{{ choice.choice_text}}</p>
+                    {% endif %}
+                    {% endfor %}
                  </div>
              </div>
-             {% endfor %}
              {% endfor %}
         </div>
     </div>

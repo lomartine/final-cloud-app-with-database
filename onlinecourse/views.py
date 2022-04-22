@@ -112,15 +112,14 @@ def enroll(request, course_id):
          # Redirect to show_exam_result with the submission id
 def submit(request, course_id):
      user = request.user
-     course = get_object_or_404(Course, pk=course_id)
-     enroll = Enrollment.objects.filter(user=user, course=course).get()
-     choices = extract_answers(request)
-     submission = Submission.objects.create(enrollment_id = enroll.id )
-     for choice in choices:
-         c = Choice.objects.filter(id = int(choice)).get()
-         submission.choices.add(c)
-     submission.save()         
-     return HttpResponseRedirect(reverse(viewname='onlinecourse:show_exam_result', args=(course.id,submission.id ))) 
+     course = Course.objects.get(pk=course_id)
+     enrollment = Enrollment.objects.get(user=user, course=course)
+     submission = Submission.objects.create(enrollment=enrollment)
+     answers = extract_answers(request)
+     submission.choices.set(answers)
+     submission.save()
+     return HttpResponseRedirect(reverse(viewname='onlinecourse:show_exam_result', args=(course_id, submission.id)))
+
 
 
 
@@ -150,17 +149,15 @@ def extract_answers(request):
         # For each selected choice, check if it is a correct answer or not
         # Calculate the total score
 def show_exam_result(request, course_id, submission_id):
-     context = {}
-     course = Course.objects.get(id = course_id)
-     submit = Submission.objects.get(id = submission_id)
-     selected = Submission.objects.filter(id = submission_id).values_list('choices',flat = True)
-     score = 0
-     for i in submit.choices.all().filter(is_correct=True).values_list('question_id'):
-         score += Question.objects.filter(id=i[0]).first().grade    
-     context['selected'] = selected
-     context['grade'] = score
-     context['course'] = course
-     return  render(request, 'onlinecourse/exam_result_bootstrap.html', context) 
+    course = Course.objects.get(id=course_id)
+    submission = Submission.objects.get(id=submission_id)
+    choices = submission.choices.all()
+    score = 0.0
+    total_scores = 0.0
+    for question in course.question_set.all():
+        if question.is_get_score(choices):
+            score += question.grade
+        total_scores += question.grade
+    context = {'course':course, 'selected_ids': choices, 'grade': 100.0*score/total_scores}
 
-
-
+    return render(request,'onlinecourse/exam_result_bootstrap.html',context)
